@@ -1,5 +1,6 @@
 import { Consumer, EachMessagePayload, Kafka } from "kafkajs";
 import { IMessageBroker } from "../types/broker";
+import { io } from "../socket";
 
 export class KafkaBroker implements IMessageBroker {
   private readonly consumer: Consumer;
@@ -38,6 +39,17 @@ export class KafkaBroker implements IMessageBroker {
           topic,
           partition,
         });
+
+        switch (topic) {
+          case "order": {
+            // check for event_type
+            const order = JSON.parse(message.value.toString());
+            io.to(order.data.tenantId).emit("order-create", order);
+            return;
+          }
+          default:
+            console.log("doing nothing....");
+        }
       },
     });
   }
